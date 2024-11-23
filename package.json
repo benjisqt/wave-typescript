@@ -1,0 +1,33 @@
+{
+  "name": "wave-typescript",
+  "version": "1.0.0",
+  "description": "The best Discord bot. Period.",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "ts-node src/index.ts",
+    "start:dev": "ts-node-dev src/index.ts",
+    "start:prod": "node dist/index.js",
+    "build": "tsc",
+    "watch": "tsc -w",
+    "nodemon": "nodemon src/index.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/benjisqt/wave-typescript.git"
+  },
+  "author": "benjisqt",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/benjisqt/wave-typescript/issues"
+  },
+  "homepage": "https://github.com/benjisqt/wave-typescript#readme",
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.5",
+    "fs": "^0.0.1-security",
+    "glob": "^7.2.3",
+    "mongoose": "^8.8.2",
+    "util": "^0.12.5"
+  }
+}
