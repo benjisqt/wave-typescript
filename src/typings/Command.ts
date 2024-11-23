@@ -6,6 +6,7 @@ import {
   GuildMember,
   PermissionResolvable,
 } from "discord.js";
+import { ExtendedClient } from "../structures/Client";
 
 export interface ExtendedInteraction extends CommandInteraction {
   member: GuildMember;
@@ -19,6 +20,7 @@ interface RunOptions {
   interaction: ExtendedInteraction;
   opts: CommandInteractionOptionResolver;
   guild: ExtendedGuild;
+  client: ExtendedClient;
 }
 
 type RunFunction = (options: RunOptions) => any;
