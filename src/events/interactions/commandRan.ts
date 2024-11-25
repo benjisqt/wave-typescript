@@ -11,6 +11,15 @@ export default new Event("interactionCreate", async (interaction) => {
         content: `⛔️ | That command is not available.`,
       });
 
+    if (
+      command.devOnly === true &&
+      interaction.user.id !== "1117933631512518716"
+    ) {
+      return interaction.reply({
+        content: `⛔️ | This command is still in development!`,
+        ephemeral: true,
+      });
+    }
     try {
       await command.run({
         opts: interaction.options as CommandInteractionOptionResolver,
