@@ -38,6 +38,11 @@ export default new Event("guildMemberRemove", async (m) => {
                   name: `Time & Date`,
                   value: `<t:${Math.round(entry.createdTimestamp / 1000)}:>`,
                   inline: true,
+                },
+                {
+                  name: `Reason`,
+                  value: `${entry.reason}`,
+                  inline: true,
                 }
               )
               .setColor("Aqua")
