@@ -1,5 +1,4 @@
 import { Command } from "../../structures/Command";
-import logging from "../../models/utility/logging";
 import cases from "../../models/moderation/cases";
 import { ApplicationCommandOptionType, EmbedBuilder } from "discord.js";
 
@@ -50,33 +49,16 @@ export default new Command({
 
     if (member.id === interaction.member.id) throw "You cannot kick yourself.";
 
-    const LS = await logging.findOne({ Guild: guild.id });
-    const logChannel = LS
-      ? await guild.channels.cache.get(LS.LogChannel)
-      : null;
-
     try {
       await member.kick(reason);
 
-      if (logChannel && logChannel.isSendable()) {
-        logChannel.send({
-          embeds: [
-            new EmbedBuilder()
-              .setTitle(`Member Kicked`)
-              .setDescription(`*A member has been kicked from the server.*`)
-              .setColor("Aqua")
-              .setFields(
-                { name: `User`, value: `<@${member.id}>`, inline: true },
-                {
-                  name: `Moderator`,
-                  value: `<@${interaction.member.id}>`,
-                  inline: true,
-                }
-              )
-              .setThumbnail(member.displayAvatarURL()),
-          ],
-        });
-      }
+      await cases.create({
+        Guild: guild.id,
+        Moderator: interaction.member.id,
+        Reason: reason,
+        Type: "Kick",
+        User: member.id,
+      });
 
       return interaction.reply({
         embeds: [

@@ -69,7 +69,7 @@ export default new Command({
 
     const selectMenu = new StringSelectMenuBuilder()
       .setCustomId("logging-selection")
-      .setMaxValues(1)
+      .setMaxValues(options.length)
       .setOptions(
         options.map((opt) =>
           new StringSelectMenuOptionBuilder()
@@ -78,7 +78,7 @@ export default new Command({
             .setValue(opt.value)
         )
       )
-      .setPlaceholder("Select a logging option below...");
+      .setPlaceholder("Select logging options below...");
 
     const selectRow =
       new ActionRowBuilder<StringSelectMenuBuilder>().setComponents(selectMenu);
@@ -126,35 +126,16 @@ export default new Command({
 
           collector.on("collect", async (i) => {
             i.deferUpdate();
-            const value = i.values[0];
+            const values = i.values;
 
-            switch (value) {
-              case "logmember":
-                {
-                  if (selected.includes("logmember")) {
-                    return;
-                  }
-                  selected.push("logmember");
-                }
-                break;
-
-              case "logchannel":
-                {
-                  if (selected.includes("logchannel")) {
-                    return;
-                  }
-                  selected.push("logchannel");
-                }
-                break;
-
-              case "logserver":
-                {
-                  if (selected.includes("logserver")) {
-                    return;
-                  }
-                  selected.push("logserver");
-                }
-                break;
+            for (const value of values) {
+              if (!selected.includes(value)) {
+                selected.push(value);
+              } else
+                return i.reply({
+                  content: `This event is already being logged.`,
+                  ephemeral: true,
+                });
             }
           });
 

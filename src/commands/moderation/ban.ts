@@ -95,11 +95,6 @@ export default new Command({
       )
       .setThumbnail(member.displayAvatarURL());
 
-    const LS = await logging.findOne({ Guild: guild.id });
-    const logChannel = LS
-      ? await guild.channels.cache.get(LS.LogChannel)
-      : null;
-
     if (softban) {
       try {
         await member.ban({ reason: `${reason}` });
@@ -111,8 +106,6 @@ export default new Command({
           Type: `Softban`,
           User: member.id,
         });
-        if (logChannel && logChannel.isSendable())
-          logChannel.send({ embeds: [embed] });
         return interaction.reply({ embeds: [embed], ephemeral: silent });
       } catch (err) {
         throw `Error during softban: ${err}`;
@@ -139,8 +132,6 @@ export default new Command({
         Type: "Tempban",
       });
 
-      if (logChannel && logChannel.isSendable())
-        logChannel.send({ embeds: [embed] });
       return interaction.reply({ embeds: [embed], ephemeral: silent });
     }
 
@@ -153,8 +144,6 @@ export default new Command({
         Reason: reason,
         Type: "Ban",
       });
-      if (logChannel && logChannel.isSendable())
-        logChannel.send({ embeds: [embed] });
       return interaction.reply({ embeds: [embed], ephemeral: silent });
     } catch (err) {
       throw `Error banning user: ${err}`;

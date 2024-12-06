@@ -1,8 +1,8 @@
 import { Command } from "../../structures/Command";
 import cases from "../../models/moderation/cases";
 import ms from "ms";
+import tempTimeout from "../../models/moderation/tempTimeout";
 import { ApplicationCommandOptionType, EmbedBuilder } from "discord.js";
-import logging from "../../models/utility/logging";
 
 export default new Command({
   name: "timeout",
@@ -70,11 +70,6 @@ export default new Command({
     const member = await guild.members.cache.get(user.id);
     if (!member) throw "That member is not in this server.";
 
-    const LS = await logging.findOne({ Guild: guild.id });
-    const logChannel = LS
-      ? await guild.channels.cache.get(LS.LogChannel)
-      : null;
-
     if (sub === "add") {
       const msDuration = ms(duration);
       if (isNaN(msDuration))
@@ -96,6 +91,9 @@ export default new Command({
       if (member.roles.highest.position >= clientMember.roles.highest.position)
         throw "I cannot time out that user; they have a higher role than me.";
 
+      if (member.communicationDisabledUntil)
+        throw "This member is already timed out.";
+
       try {
         await member.timeout(msDuration, reason);
 
@@ -104,6 +102,11 @@ export default new Command({
           Moderator: interaction.member.id,
           Reason: reason,
           Type: "Timeout",
+          User: member.id,
+        });
+
+        await tempTimeout.create({
+          Guild: guild.id,
           User: member.id,
         });
 
@@ -127,12 +130,6 @@ export default new Command({
               inline: true,
             }
           );
-
-        if (logChannel && logChannel.isSendable()) {
-          logChannel.send({
-            embeds: [embed],
-          });
-        }
 
         return interaction.reply({
           embeds: [embed],
@@ -163,12 +160,6 @@ export default new Command({
               inline: true,
             }
           );
-
-        if (logChannel && logChannel.isSendable()) {
-          logChannel.send({
-            embeds: [embed],
-          });
-        }
 
         return interaction.reply({
           embeds: [embed],

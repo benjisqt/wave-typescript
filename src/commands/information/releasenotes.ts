@@ -18,7 +18,7 @@ export default new Command({
         new EmbedBuilder()
           .setTitle(`wave's newest updates.`)
           .setDescription(
-            `**Newest Version: v${version}**\n\n*Release Notes:*\n${check.latest.message}`
+            `**Newest Version: v${version}**\n\n*Release Notes:*\n> ${check.latest.message}\n**${check.latest.body}**`
           )
           .setColor("Aqua")
           .setThumbnail(client.user.displayAvatarURL()),
