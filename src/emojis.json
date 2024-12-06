@@ -1,0 +1,19 @@
+{
+  "badges": {
+    "staff": "<:staff:1260710214320263188>",
+    "partner": "<:partner:1260710275875602595>",
+    "team_user": "<:activedv:1260710326995914772>",
+    "bughunter_lv1": "<:bughunter1:1260710385057534096>",
+    "bughunter_lv2": "<:bughunter2:1260710412224041061>",
+    "moderator": "<:moderator:1260710468884893706>",
+    "early_supporter": "<:earlysupporter:1260710524220604480>",
+    "hypesquad": "<:hypesquad:1260710574132695190>",
+    "brilliance": "<:brilliance:1260710617002676356>",
+    "bravery": "<:bravery:1260710654478782504>",
+    "balance": "<:balance:1260710686485512355>",
+    "active_developer": "<:activedv:1260710326995914772>",
+    "verified_bot": "<:verifiedbot:1260710757964976199>",
+    "early_verified_bot_developer": "<:verifiedbotdev:1260710823030951959>",
+    "newuser": "<:newuser:1260713969954328768>"
+  }
+}

@@ -12,5 +12,9 @@ export default model(
     NoGhost: {
       Enabled: Boolean,
     },
+    NoSpam: {
+      Enabled: Boolean,
+      MessageLimit: Number,
+    },
   })
 );

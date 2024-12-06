@@ -27,11 +27,15 @@ export default new Command({
       },
       {
         label: "NoGhost",
-        description: `${
-          TG ? (TG.NoGhost.Enabled ? `Configure` : `Setup`) : "Setup"
-        } the NoGhost system.`,
+        description: `Configure the NoGhost system.`,
         value: "noghost",
         emoji: `${TG ? (TG.NoGhost.Enabled ? "☑️" : "❌") : "❌"}`,
+      },
+      {
+        label: "NoSpam",
+        description: `Configure the NoSpam system.`,
+        value: "nospam",
+        emoji: `${TG ? (TG.NoSpam.Enabled ? "☑️" : "❌") : "❌"}`,
       },
     ];
 
@@ -54,9 +58,7 @@ export default new Command({
     const embed = new EmbedBuilder()
       .setTitle(`TideGuard ${TG ? "Setup" : "Configurator"}`)
       .setDescription(
-        `Select any of the options presented below to ${
-          TG ? "setup" : "configurate"
-        } TideGuard.`
+        `Select any of the options presented below to configure TideGuard.`
       )
       .setColor("Aqua")
       .setThumbnail(guild.iconURL());

@@ -88,6 +88,13 @@ export default new Event("interactionCreate", async (i) => {
                 Punishment: punishment,
                 MaxDays: maxD,
               },
+              NoGhost: {
+                Enabled: false,
+              },
+              NoSpam: {
+                Enabled: false,
+                MessageLimit: 0,
+              },
             });
           }
           collector.stop();
@@ -106,6 +113,10 @@ export default new Event("interactionCreate", async (i) => {
         NoGhost: {
           Enabled: true,
         },
+        NoSpam: {
+          Enabled: false,
+          MessageLimit: 0,
+        },
       });
     } else if (TG && !TG.NoGhost) {
       TG.NoGhost.Enabled = true;
@@ -115,6 +126,74 @@ export default new Event("interactionCreate", async (i) => {
     return i.reply({
       content: `NoGhost Enabled.\n*Ghost pings will now be punished where possible.*`,
       ephemeral: true,
+    });
+  } else if (selection === "nospam") {
+    if (TG) {
+      if (TG.NoSpam.Enabled) {
+        TG.NoSpam.Enabled = false;
+        await TG.save();
+
+        return i.reply({
+          content: `NoSpam system disabled!`,
+          ephemeral: true,
+        });
+      }
+    }
+
+    await i.reply({
+      content: `Please name a message limit for the NoSpam to trigger.`,
+      ephemeral: true,
+    });
+
+    const collector = i.channel.createMessageCollector({
+      filter: (m) => m.author.id === i.user.id,
+      time: 60000,
+    });
+
+    if (!collector) return;
+
+    let step = 1;
+
+    collector.on("collect", async (m) => {
+      const response = m.content.trim().toLowerCase();
+      const maxMessages = parseInt(response, 10);
+
+      switch (step) {
+        case 1:
+          if (isNaN(maxMessages) || maxMessages > 10) {
+            return m.reply({
+              content: `That is either not a number or the message limit has been set above 10.`,
+            });
+          }
+
+          await m.reply({
+            content: `NoSpam enabled.\nThe filter will trigger when a user sends more than ${maxMessages} messages consecutively.`,
+          });
+
+          if (TG) {
+            TG.NoSpam.Enabled = true;
+            TG.NoSpam.MessageLimit = maxMessages;
+            await TG.save();
+          } else {
+            await tideguard.create({
+              Guild: i.guild.id,
+              NoSpam: {
+                Enabled: true,
+                MessageLimit: maxMessages,
+              },
+              NoAlt: {
+                Enabled: false,
+                Punishment: "",
+                MaxDays: 0,
+              },
+              NoGhost: {
+                Enabled: false,
+              },
+            });
+          }
+          collector.stop();
+          break;
+      }
     });
   }
 });
