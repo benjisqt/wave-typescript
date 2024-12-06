@@ -4,7 +4,6 @@ import {
   ChannelType,
   EmbedBuilder,
 } from "discord.js";
-import cases from "../../models/moderation/cases";
 import logging from "../../models/utility/logging";
 
 export default new Command({
@@ -18,13 +17,13 @@ export default new Command({
       options: [
         {
           name: "user",
-          description: "The user you want to unban. (<@(userid)>)",
+          description: "The user you want to unban.",
           type: ApplicationCommandOptionType.User,
           required: true,
         },
         {
           name: "silent",
-          description: "Enable if you want to send the message silently.",
+          description: "Send the message silently.",
           type: ApplicationCommandOptionType.Boolean,
         },
       ],
@@ -36,7 +35,7 @@ export default new Command({
       options: [
         {
           name: "silent",
-          description: "Enable if you want to send the message silently.",
+          description: "Send the message silently.",
           type: ApplicationCommandOptionType.Boolean,
         },
       ],
@@ -47,48 +46,51 @@ export default new Command({
     const sub = opts.getSubcommand();
     const user = opts.getUser("user");
     const silent = opts.getBoolean("silent") || false;
-    const LS = await logging.findOne({ Guild: guild.id });
+    const logChannel = (await logging.findOne({ Guild: guild.id }))?.LogChannel;
 
-    switch (sub) {
-      case "user":
-        {
-          const exists = await guild.bans.cache.find(
-            (b) => b.user.id === user.id
-          );
-          if (!exists) throw "That user is not banned in this server.";
+    const embed = new EmbedBuilder()
+      .setThumbnail(guild.iconURL())
+      .setFooter({ text: "wave, by Aurion Development™️." })
+      .setColor("Aqua");
 
-          await guild.bans.remove(user, `Unbanned by wave.`);
+    try {
+      if (sub === "user") {
+        const ban = guild.bans.cache.find((b) => b.user.id === user.id);
+        if (!ban) throw "That user is not banned in this server.";
 
-          const embed = new EmbedBuilder()
-            .setTitle(`Member Unbanned`)
-            .setDescription(`**A member has been unbanned from the server.**`)
-            .setThumbnail(guild.iconURL())
-            .setFooter({ text: `wave, by Aurion Development™️.` })
-            .setColor("Aqua");
+        await guild.bans.remove(user, `Unbanned by ${interaction.user.tag}`);
+        embed
+          .setTitle("Member Unbanned")
+          .setDescription(`**${user.tag}** has been unbanned from the server.`);
 
-          if (LS) {
-            const LC = await guild.channels.cache.get(LS.LogChannel);
-            if (LC) {
-              if (LC.isSendable() && LC.type === ChannelType.GuildText) {
-                try {
-                  LC.send({ embeds: [embed] });
-                } catch (err) {
-                  console.log(err);
-                }
-              }
-            }
-          }
-
-          return interaction.reply({ embeds: [embed], ephemeral: silent });
+        if (logChannel) {
+          const channel = await guild.channels.fetch(logChannel);
+          if (channel?.isSendable()) channel.send({ embeds: [embed] });
         }
-        break;
+      } else if (sub === "all") {
+        // handle mass unban
+        const bannedUsers = guild.bans.cache.map((ban) => ban.user.id);
+        if (!bannedUsers.length) throw "No users are currently banned.";
 
-      case "all":
-        {
-          if (guild.bans.cache.size <= 0)
-            throw "There are no members to unban, since none are banned.";
+        await Promise.all(
+          bannedUsers.map((userId) =>
+            guild.bans.remove(userId, `Mass unban by ${interaction.user.tag}`)
+          )
+        );
+
+        embed
+          .setTitle("All Members Unbanned")
+          .setDescription("**All banned members have been unbanned.**");
+
+        if (logChannel) {
+          const channel = await guild.channels.fetch(logChannel);
+          if (channel?.isSendable()) channel.send({ embeds: [embed] });
         }
-        break;
+      }
+
+      return interaction.reply({ embeds: [embed], ephemeral: silent });
+    } catch (err) {
+      return interaction.reply({ content: err, ephemeral: true });
     }
   },
 });

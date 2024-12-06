@@ -8,6 +8,6 @@ export default model(
     Reason: String,
     Type: String,
     Moderator: String,
-    Time: String,
+    Time: Number,
   })
 );

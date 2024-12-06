@@ -69,7 +69,7 @@ export default new Command({
 
     const selectMenu = new StringSelectMenuBuilder()
       .setCustomId("logging-selection")
-      .setMaxValues(3)
+      .setMaxValues(1)
       .setOptions(
         options.map((opt) =>
           new StringSelectMenuOptionBuilder()

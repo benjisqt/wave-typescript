@@ -1,13 +1,14 @@
 import { Command } from "../../structures/Command";
 import { ApplicationCommandOptionType, EmbedBuilder } from "discord.js";
-import reply from "../../functions/reply";
 import cases from "../../models/moderation/cases";
+import logging from "../../models/utility/logging";
 import ms from "ms";
 
 export default new Command({
   name: "ban",
   description: "Ban a member from the server.",
   userPermissions: ["BanMembers"],
+  clientPermissions: ["BanMembers"],
   options: [
     {
       name: "user",
@@ -43,41 +44,120 @@ export default new Command({
     const user = opts.getUser("user");
     const reason = opts.getString("reason") || "No reason provided.";
     const duration = opts.getString("duration");
-    const softban = opts.getBoolean("softban") || false;
+    const softban = opts.getBoolean("softban");
     const silent = opts.getBoolean("silent") || false;
 
-    // check if member exists
     const member = await guild.members.cache.get(user.id);
-    if (!member)
-      throw "That member is not in this server; they cannot be banned.";
-
+    if (!member) throw "That member is not in this server.";
     const clientMember = await guild.members.cache.get(client.user.id);
 
-    // check role pos
+    // role pos checking
     if (member.roles.highest.position >= clientMember.roles.highest.position)
-      throw "Role position error; I cannot ban that user because they are higher than me.";
-
-    if (member.permissions.has("Administrator"))
-      throw "That user has Administrator; they cannot be banned.";
+      throw "I cannot ban this user due to role heirarchy.";
 
     if (
       member.roles.highest.position >= interaction.member.roles.highest.position
     )
-      throw "Role position error; I cannot ban that user because they are higher than you.";
+      throw "I cannot ban this user due to your role heirarchy.";
 
-    if (member.id === interaction.member.id) throw "You cnanot ban yourself.";
+    if (member.id === interaction.user.id) throw "You cannot ban yourself.";
 
-    if (!member.bannable) throw "Error; user is not bannable.";
+    if (member.permissions.has("Administrator"))
+      throw "That user has Administrator permissions.";
 
-    await guild.fetchOwner();
+    if (!member.bannable) throw "That member is not bannable.";
+
     if (guild.ownerId === member.id) throw "You cannot ban the server owner.";
 
-    if (softban === true) {
+    if (softban && duration) throw "Duration is not applicable for softban.";
+
+    const embed = new EmbedBuilder()
+      .setColor("Aqua")
+      .setTitle(
+        softban
+          ? `Member Softbanned`
+          : duration
+          ? `Member Tempbanned`
+          : `Member Banned`
+      )
+      .setDescription(
+        `A member in this server has been ${
+          softban ? `softbanned` : duration ? `temporarily banned` : `banned`
+        }.`
+      )
+      .setFields(
+        {
+          name: `Moderator`,
+          value: `<@${interaction.member.id}>`,
+          inline: true,
+        },
+        { name: `User`, value: `<@${member.id}>`, inline: true }
+      )
+      .setThumbnail(member.displayAvatarURL());
+
+    const LS = await logging.findOne({ Guild: guild.id });
+    const logChannel = LS
+      ? await guild.channels.cache.get(LS.LogChannel)
+      : null;
+
+    if (softban) {
       try {
         await member.ban({ reason: `${reason}` });
-        await guild.bans.remove(user, "Softbanned");
-      } catch (err) {}
-    } else {
+        await guild.bans.remove(user, `Softban`);
+        await cases.create({
+          Guild: guild.id,
+          Moderator: interaction.member.id,
+          Reason: reason,
+          Type: `Softban`,
+          User: member.id,
+        });
+        if (logChannel && logChannel.isSendable())
+          logChannel.send({ embeds: [embed] });
+        return interaction.reply({ embeds: [embed], ephemeral: silent });
+      } catch (err) {
+        throw `Error during softban: ${err}`;
+      }
+    }
+
+    if (duration) {
+      const msDuration = ms(duration);
+      if (isNaN(msDuration))
+        throw 'Invalid duration. Use formats like "1d", "2h"';
+      const expiry = new Date(Date.now() + msDuration);
+      embed.addFields({
+        name: `Expiry`,
+        value: `<t:${Math.floor(expiry.getTime() / 1000)}:R>`,
+        inline: true,
+      });
+
+      await cases.create({
+        Guild: guild.id,
+        User: member.id,
+        Moderator: interaction.user.id,
+        Reason: reason,
+        Time: msDuration,
+        Type: "Tempban",
+      });
+
+      if (logChannel && logChannel.isSendable())
+        logChannel.send({ embeds: [embed] });
+      return interaction.reply({ embeds: [embed], ephemeral: silent });
+    }
+
+    try {
+      await member.ban({ reason: reason });
+      await cases.create({
+        Guild: guild.id,
+        Moderator: interaction.user.id,
+        User: member.id,
+        Reason: reason,
+        Type: "Ban",
+      });
+      if (logChannel && logChannel.isSendable())
+        logChannel.send({ embeds: [embed] });
+      return interaction.reply({ embeds: [embed], ephemeral: silent });
+    } catch (err) {
+      throw `Error banning user: ${err}`;
     }
   },
 });
