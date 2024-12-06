@@ -9,6 +9,8 @@ import logging from "../../models/utility/logging";
 export default new Command({
   name: "unban",
   description: "Unban one or all members from the server.",
+  clientPermissions: ["BanMembers"],
+  userPermissions: ["BanMembers"],
   options: [
     {
       name: "user",
